@@ -16,9 +16,14 @@ type Serializer interface {
 }
 
 // GOBSerializer implements the Serializer interface and uses the GOB format
-type GOBSerializer struct{}
+type GOBSerializer struct {
+	CustomContentType *string
+}
 
-func (*GOBSerializer) ContentType() string {
+func (s *GOBSerializer) ContentType() string {
+	if s.CustomContentType != nil {
+		return *s.CustomContentType
+	}
 	return "binary/gob"
 }
 func (*GOBSerializer) RelayEncode(w io.Writer, e interface{}) error {
@@ -31,9 +36,14 @@ func (*GOBSerializer) RelayDecode(r io.Reader, o interface{}) error {
 }
 
 // JSONSerializer implements the Serializer interface and uses JSON
-type JSONSerializer struct{}
+type JSONSerializer struct {
+	CustomContentType *string
+}
 
-func (*JSONSerializer) ContentType() string {
+func (s *JSONSerializer) ContentType() string {
+	if s.CustomContentType != nil {
+		return *s.CustomContentType
+	}
 	return "text/json"
 }
 
