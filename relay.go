@@ -337,13 +337,12 @@ func (r *Relay) Publisher(queue string) (*Publisher, error) {
 	// Check if we need confirmations
 	if !r.conf.DisablePublishConfirm {
 		errCh := ch.NotifyClose(make(chan *amqp.Error, 1))
-		ackCh, nackCh := ch.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
 		if err := ch.Confirm(false); err != nil {
 			return nil, fmt.Errorf("Failed to put publisher in confirm mode! Got: %s", err)
 		}
 
 		// Attach the channels
-		pub.ackCh, pub.nackCh, pub.errCh = ackCh, nackCh, errCh
+		pub.errCh = errCh
 	}
 
 	// Successful return
