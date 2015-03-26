@@ -3,6 +3,7 @@ package relay
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ type Config struct {
 	Serializer            Serializer    // Defaults to GOBSerializer
 	MessageTTL            time.Duration // Optional, attempts to put a TTL on message life
 	QueueTTL              time.Duration // Optional, attempts to make a TTL on a queue life
+	DelayQueueArgs        map[string](map[string]interface{})
 }
 
 type Relay struct {
@@ -204,6 +206,16 @@ func (r *Relay) declareQueue(ch *amqp.Channel, name string) error {
 		args = make(map[string]interface{})
 		msec := int32(r.conf.QueueTTL / time.Millisecond)
 		args["x-expires"] = msec
+	} else if r.conf.DelayQueueArgs != nil {
+		queueName := name[strings.Index(name, ".")+1:]
+		if queueName != "" {
+			if conf, ok := r.conf.DelayQueueArgs[queueName]; ok {
+				args = make(map[string]interface{})
+				args["x-message-ttl"] = int32(conf["x_message_ttl"].(int32))
+				args["x-dead-letter-exchange"] = r.conf.Exchange
+				args["x-dead-letter-routing-key"] = r.conf.Exchange + "." + conf["x_dead_letter_routing_key"].(string)
+			}
+		}
 	}
 
 	// Declare the queue
